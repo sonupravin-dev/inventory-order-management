@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 
 function App() {
-  const API = "http://localhost:8000";
+  const API = "https://inventory-order-management-1-hhhm.onrender.com";
 
   // PRODUCTS
   const [products, setProducts] = useState([]);
