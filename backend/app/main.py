@@ -84,18 +84,22 @@ def get_orders(db: Session = Depends(get_db)):
     result = []
 
     for order in orders:
+
         items_list = []
         total = 0
 
         for item in order.items:
+
             product = db.query(Product).filter(Product.id == item.product_id).first()
+
+            if not product:
+                continue
 
             subtotal = product.price * item.quantity
             total += subtotal
 
             items_list.append({
                 "product_name": product.name,
-                "sku": product.sku,
                 "quantity": item.quantity,
                 "price": product.price,
                 "subtotal": subtotal
@@ -103,7 +107,7 @@ def get_orders(db: Session = Depends(get_db)):
 
         result.append({
             "order_id": order.id,
-            "customer_name": order.customer.name,
+            "customer_id": order.customer_id,
             "items": items_list,
             "total_amount": total
         })
