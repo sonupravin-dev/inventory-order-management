@@ -79,20 +79,29 @@ function App() {
 
   // CREATE ORDER
   const createOrder = () => {
-    axios.post(`${API}/orders`, {
-      customer_id: parseInt(selectedCustomer),
-      items: [
-        {
-          product_id: parseInt(selectedProduct),
-          quantity: parseInt(quantity)
-        }
-      ]
-    }).then(() => {
-      fetchOrders();
-      fetchProducts();
-    });
-  };
+  if (!selectedCustomer || !selectedProduct || !quantity) {
+    alert("Please select customer, product and quantity");
+    return;
+  }
 
+  axios.post(`${API}/orders`, {
+    customer_id: parseInt(selectedCustomer),
+    items: [
+      {
+        product_id: parseInt(selectedProduct),
+        quantity: parseInt(quantity)
+      }
+    ]
+  })
+  .then(() => {
+    fetchOrders();
+    fetchProducts();
+  })
+  .catch((err) => {
+    console.log(err);
+    alert("Order failed. Check console");
+  });
+};
   return (
     <div style={{ padding: "20px" }}>
       <h1>Inventory System</h1>
@@ -134,7 +143,7 @@ function App() {
       <h2>Create Order</h2>
 
       <select onChange={e => setSelectedCustomer(e.target.value)}>
-        <option>Select Customer</option>
+        <option value="">Select Customer</option>
         {customers.map(c => (
           <option value={c.id} key={c.id}>
             {c.name}
@@ -143,7 +152,7 @@ function App() {
       </select>
 
       <select onChange={e => setSelectedProduct(e.target.value)}>
-        <option>Select Product</option>
+        <option value="">Select Product</option>
         {products.map(p => (
           <option value={p.id} key={p.id}>
             {p.name}
