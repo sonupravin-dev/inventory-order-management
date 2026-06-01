@@ -85,6 +85,10 @@ def get_orders(db: Session = Depends(get_db)):
 
     for order in orders:
 
+        # ✅ GET CUSTOMER NAME (FIX)
+        customer = db.query(Customer).filter(Customer.id == order.customer_id).first()
+        customer_name = customer.name if customer else "Unknown"
+
         items_list = []
         total = 0
 
@@ -108,54 +112,9 @@ def get_orders(db: Session = Depends(get_db)):
         result.append({
             "order_id": order.id,
             "customer_id": order.customer_id,
+            "customer_name": customer_name,   # ✅ ADD THIS LINE
             "items": items_list,
             "total_amount": total
         })
 
     return result
-
-@app.post("/orders")
-def create_order(order: OrderCreate, db: Session = Depends(get_db)):
-
-    customer = db.query(Customer).filter(Customer.id == order.customer_id).first()
-    if not customer:
-        raise HTTPException(status_code=404, detail="Customer not found")
-
-    new_order = Order(customer_id=order.customer_id)
-    db.add(new_order)
-    db.commit()
-    db.refresh(new_order)
-
-    total_amount = 0
-
-    for item in order.items:
-
-        product = db.query(Product).filter(Product.id == item.product_id).first()
-
-        if not product:
-            raise HTTPException(status_code=404, detail="Product not found")
-
-        if product.stock_quantity < item.quantity:
-            raise HTTPException(status_code=400, detail="Insufficient stock")
-
-        # reduce stock
-        product.stock_quantity -= item.quantity
-
-        # ✅ IMPORTANT: SAVE ORDER ITEM
-        order_item = OrderItem(
-            order_id=new_order.id,
-            product_id=product.id,
-            quantity=item.quantity
-        )
-
-        db.add(order_item)
-
-        total_amount += product.price * item.quantity
-
-    db.commit()
-
-    return {
-        "order_id": new_order.id,
-        "total_amount": total_amount,
-        "message": "Order created successfully"
-    }
