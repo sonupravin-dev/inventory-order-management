@@ -76,46 +76,6 @@ def create_customer(
 
     return new_customer
 
-@app.post("/orders")
-def create_order(
-    order: OrderCreate,
-    db: Session = Depends(get_db)
-):
-    # 1. Check customer exists
-    customer = db.query(Customer).filter(
-        Customer.id == order.customer_id
-    ).first()
-
-    if not customer:
-        raise HTTPException(
-            status_code=404,
-            detail="Customer not found"
-        )
-
-    # 2. Validate stock first (IMPORTANT)
-    for item in order.items:
-        product = db.query(Product).filter(
-            Product.id == item.product_id
-        ).first()
-
-        if not product:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Product {item.product_id} not found"
-            )
-
-        if product.stock_quantity < item.quantity:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Insufficient stock for {product.name}"
-            )
-
-    # 3. Create order
-    new_order = Order(customer_id=order.customer_id)
-    db.add(new_order)
-    db.commit()
-    db.refresh(new_order)
-
 @app.get("/orders")
 def get_orders(db: Session = Depends(get_db)):
 
@@ -124,59 +84,28 @@ def get_orders(db: Session = Depends(get_db)):
     result = []
 
     for order in orders:
-
         items_list = []
         total = 0
 
         for item in order.items:
+            product = db.query(Product).filter(Product.id == item.product_id).first()
 
-            product = db.query(Product).filter(
-                Product.id == item.product_id
-            ).first()
-
-            item_total = product.price * item.quantity
-
-            total += item_total
+            subtotal = product.price * item.quantity
+            total += subtotal
 
             items_list.append({
                 "product_name": product.name,
                 "sku": product.sku,
                 "quantity": item.quantity,
                 "price": product.price,
-                "subtotal": item_total
+                "subtotal": subtotal
             })
 
         result.append({
             "order_id": order.id,
-            "customer_id": order.customer_id,
             "customer_name": order.customer.name,
             "items": items_list,
             "total_amount": total
         })
 
-    return result    
-
-    # 4. Create order items + reduce stock
-    for item in order.items:
-        product = db.query(Product).filter(
-            Product.id == item.product_id
-        ).first()
-
-        order_item = OrderItem(
-            order_id=new_order.id,
-            product_id=item.product_id,
-            quantity=item.quantity
-        )
-
-        db.add(order_item)
-
-        # reduce stock
-        product.stock_quantity -= item.quantity
-
-    # 5. Save everything
-    db.commit()
-
-    return {
-        "message": "Order created successfully",
-        "order_id": new_order.id
-    }
+    return result
