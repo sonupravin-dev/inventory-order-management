@@ -76,6 +76,10 @@ def create_customer(
 
     return new_customer
 
+@app.get("/customers")
+def get_customers(db: Session = Depends(get_db)):
+    return db.query(Customer).all()    
+
 @app.get("/orders")
 def get_orders(db: Session = Depends(get_db)):
 
