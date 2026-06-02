@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 
 function App() {
-  const API = "https://inventory-order-management-nhmh.onrender.com/";
+  const API = "https://inventory-order-management-nhmh.onrender.com";
 
+  console.log("API =", API);
+  
   // PRODUCTS
   const [products, setProducts] = useState([]);
   const [name, setName] = useState("");
