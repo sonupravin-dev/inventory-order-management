@@ -1,5 +1,16 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # allow all for now (important for deployment test)
+    allow_credentials=True,
+    allow_methods=["*"],   # IMPORTANT (includes OPTIONS, POST, GET)
+    allow_headers=["*"],
+)
 
 from .database import engine, get_db
 from .models import (
@@ -17,15 +28,17 @@ from .schemas import (
     OrderCreate
 )
 
-
-app = FastAPI()
-
 Base.metadata.create_all(bind=engine)
-
 
 @app.get("/")
 def root():
     return {"message": "Inventory Management API"}
+
+@app.get("/test")
+def test():
+    return {
+        "message": "new deployment working"
+    }    
 
 
 @app.post("/products", response_model=ProductResponse)
